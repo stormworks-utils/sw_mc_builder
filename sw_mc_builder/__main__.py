@@ -20,7 +20,8 @@ mc.place_input(input1, 0, 0)
 mc.place_input(input2, 0, 1)
 mc.place_output(added, "Added", x=1, y=0)
 
-handle_mcs(mc)
+if __name__ == "__main__":
+    handle_mcs(mc)
 """
 
 
