@@ -50,13 +50,13 @@ jobs:
         pip install pyinstaller
         pip install -r requirements.txt
     - name: Build with PyInstaller
-      run: pyinstaller tumfl.spec
+      run: pyinstaller sw_mc_builder.spec
     - name: Rename output (for clarity)
       run: |
         ls -lha dist
         mkdir -p dist_out
         OS="$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')"
-        for f in dist/tumfl*; do
+        for f in dist/sw_mc_builder*; do
           filename=$(basename "$f")
           if [[ "$filename" == *.* ]]; then
             extension=".${filename##*.}"
@@ -71,7 +71,7 @@ jobs:
     - name: Upload build as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: tumfl-${{ runner.os }}
+        name: sw_mc_builder-${{ runner.os }}
         path: dist_out/*
 
   upload-release:
