@@ -9,6 +9,7 @@ from typing import Optional
 from sw_mc_lib import XMLParserElement, format, parse
 from sw_mc_lib.Types import ComponentType
 
+from sw_mc_builder._handling_arguments import parser_arguments
 from sw_mc_builder._utils import BUILDER_IDENTIFIER
 from sw_mc_builder.microcontroller import Microcontroller
 
@@ -223,25 +224,7 @@ def handle_mcs(*mcs: Microcontroller) -> None:
     if len(mcs) == 0:
         raise ValueError("At least one microcontroller must be provided")
     parser = ArgumentParser(description="Microcontroller collection")
-    parser.add_argument(
-        "--microcontroller",
-        "-m",
-        action="store_true",
-        help="Export microcontrollers to Stormworks microcontroller directory",
-    )
-    parser.add_argument(
-        "--vehicle",
-        "-v",
-        type=str,
-        nargs="*",
-        help="Export microcontrollers to vehicles",
-    )
-    parser.add_argument(
-        "--select",
-        "-s",
-        type=str,
-        help="Select, which microcontrollers to export based on their name. Separated by commas.",
-    )
+    parser_arguments(parser)
     args = parser.parse_args()
     if args.select:
         selected_names = {name.strip() for name in args.select.split(",")}
