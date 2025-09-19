@@ -18,6 +18,8 @@ After installing, use the `sw_mc_builder` module to create microcontrollers.
 sw_mc_builder init test_mc.py
 ```
 
+Afterwards, you can define a microcontroller in `test_mc.py`.
+
 ```python
 from sw_mc_builder import *
 
@@ -34,6 +36,12 @@ mc.place_output(added, "Added", x=1, y=0)
 mc.place_output(highest, "Highest", x=1, y=1)
 
 handle_mcs(mc)
+```
+
+And finally, run the script to generate the microcontroller (`-m`).
+
+```commandline
+sw_mc_builder run test_mc.py -m
 ```
 
 ## Design

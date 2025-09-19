@@ -34,7 +34,7 @@ def temporary_argv(new_argv: list[str]) -> Generator[None, None, None]:
         sys.argv = old
 
 
-def execute_child_script(child_path: Path, args: list[str]) -> None:
+def run_child_script(child_path: Path, args: list[str]) -> None:
     resolved_child_path = str(child_path.resolve())
     # argv[0] will be the script filename (often useful to child)
     argv: list[str] = [resolved_child_path, *args]
@@ -61,19 +61,19 @@ def main() -> None:
     )
     init.add_argument("name", type=Path, help="Name of the microcontroller project")
     init.set_defaults(func="init")
-    execute = subparsers.add_parser(
-        "execute", help="Execute a microcontroller project", aliases=["e"]
+    run = subparsers.add_parser(
+        "Run", help="Execute a microcontroller project", aliases=["r"]
     )
-    execute.add_argument(
+    run.add_argument(
         "name", type=Path, help="Path to the microcontroller definition file"
     )
-    parser_arguments(execute)
-    execute.set_defaults(func="execute")
+    parser_arguments(run)
+    run.set_defaults(func="run")
     args = parser.parse_args()
     if args.func == "init":
         initialize_mc(args.name)
-    elif args.func == "execute":
-        execute_child_script(args.name, sys.argv[3:])
+    elif args.func == "run":
+        run_child_script(args.name, sys.argv[3:])
 
 
 if __name__ == "__main__":
