@@ -12,4 +12,5 @@ mc.place_input(first_wire, 0, 0)
 mc.place_input(second_wire, 0, 1)
 mc.place_output(result, "Result", x=1, y=0)
 
-handle_mcs(mc)
+if __name__ == "__main__":
+    handle_mcs(mc)
