@@ -12,7 +12,21 @@ A framework for building microcontrollers in Stormworks: Build and Rescue using 
 
 ## Getting started
 
-After installing, use the `sw_mc_builder` module to create microcontrollers.
+### Installation
+
+#### Install the package using pip
+
+```commandline
+pip install sw_mc_builder
+```
+
+#### Install using prebuilt binaries
+
+Copy the latest release for your platform from the [releases](https://github.com/stormworks-utils/sw_mc_builder/releases) page and add it to your PATH.
+
+### Usage
+
+After installing, use the `sw_mc_builder` module/executable to create microcontrollers.
 
 ```commandline
 sw_mc_builder init test_mc.py
