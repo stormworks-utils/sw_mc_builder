@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import re
 import inspect
+import re
 import warnings
-from typing import Generic, Literal, Optional, TypeVar, overload, Iterable
+from typing import Generic, Iterable, Literal, Optional, TypeVar, overload
 
 from sw_mc_lib import Input, Position
 from sw_mc_lib.Components import ConstantNumber, ConstantOn
@@ -24,9 +24,10 @@ T = TypeVar("T", bound=SignalType)
 
 
 class Wire(Generic[T]):
+    # pylint: disable=too-many-public-methods
+
     SET_VIA_SET_METHOD: set[ComponentWrapper | PseudoComponent] = set()
 
-    # pylint: disable=too-many-public-methods
     def __init__(
         self,
         wire_type: T,
@@ -230,22 +231,39 @@ class Wire(Generic[T]):
 
     @staticmethod
     def __is_bool(element: object) -> bool:
-        return isinstance(element, bool) or (isinstance(element, Wire) and element.wire_type == SignalType.Boolean)
+        return isinstance(element, bool) or (
+            isinstance(element, Wire) and element.wire_type == SignalType.Boolean
+        )
 
     @staticmethod
     def __is_number(element: object) -> bool:
-        return isinstance(element, (int, float)) or (isinstance(element, Wire) and element.wire_type == SignalType.Number)
+        return isinstance(element, (int, float)) or (
+            isinstance(element, Wire) and element.wire_type == SignalType.Number
+        )
 
     @overload
     def set(self, item: int, value: NumberInput | BooleanInput) -> CompositeWire: ...
 
     @overload
-    def set(self, item: slice, value: Iterable[NumberWire | int | float]) -> CompositeWire: ...
+    def set(
+        self, item: slice, value: Iterable[NumberWire | int | float]
+    ) -> CompositeWire: ...
 
     @overload
-    def set(self, item: slice, value: Iterable[BooleanWire | bool]) -> CompositeWire: ...
+    def set(
+        self, item: slice, value: Iterable[BooleanWire | bool]
+    ) -> CompositeWire: ...
 
-    def set(self, item: int | slice, value: NumberInput | BooleanInput | Iterable[NumberWire | int | float] | Iterable[BooleanWire | bool]) -> CompositeWire:
+    def set(
+        self,
+        item: int | slice,
+        value: (
+            NumberInput
+            | BooleanInput
+            | Iterable[NumberWire | int | float]
+            | Iterable[BooleanWire | bool]
+        ),
+    ) -> CompositeWire:
         """Alias for __setitem__ to allow using .set() instead of []= for setting composite values."""
         self.SET_VIA_SET_METHOD.add(self.producer)
         if self.wire_type != SignalType.Composite:
@@ -259,7 +277,11 @@ class Wire(Generic[T]):
                 raise ValueError("Value length must match slice length")
             if len(index_slice) == 0:
                 return self  # type: ignore[return-value]
-            composite_write = comp.composite_write_number if self.__is_number(value_list[0]) else comp.composite_write_boolean
+            composite_write = (
+                comp.composite_write_number
+                if self.__is_number(value_list[0])
+                else comp.composite_write_boolean
+            )
             return composite_write(self, **{f"channel{idx}": val for idx, val in zip(index_slice, value_list)})  # type: ignore[arg-type]
         if self.__is_number(value):
             return comp.composite_write_number(self, item, value)  # type: ignore[arg-type]
@@ -271,14 +293,28 @@ class Wire(Generic[T]):
     def __setitem__(self, item: int, value: NumberInput | BooleanInput) -> None: ...
 
     @overload
-    def __setitem__(self, item: slice, value: Iterable[NumberWire | int | float]) -> None: ...
+    def __setitem__(
+        self, item: slice, value: Iterable[NumberWire | int | float]
+    ) -> None: ...
 
     @overload
     def __setitem__(self, item: slice, value: Iterable[BooleanWire | bool]) -> None: ...
 
-    def __setitem__(self, item: int | slice, value: NumberInput | BooleanInput | Iterable[NumberWire | int | float] | Iterable[BooleanWire | bool]) -> None:
+    def __setitem__(
+        self,
+        item: int | slice,
+        value: (
+            NumberInput
+            | BooleanInput
+            | Iterable[NumberWire | int | float]
+            | Iterable[BooleanWire | bool]
+        ),
+    ) -> None:
         if self.producer in self.SET_VIA_SET_METHOD:
-            warnings.warn("Using both `wire[index] = value` and `wire.set(index, value)` on the same CompositeWire is not recommended. This may lead to surprising behaviour.", stacklevel=2)
+            warnings.warn(
+                "Using both `wire[index] = value` and `wire.set(index, value)` on the same CompositeWire is not recommended. This may lead to surprising behaviour.",
+                stacklevel=2,
+            )
             stack = inspect.stack()
             if len(stack) > 1:
                 frame_info = stack[1]
@@ -433,29 +469,38 @@ class Wire(Generic[T]):
         return comp.function("sqrt(x)", self)  # type: ignore[arg-type]
 
     @overload
-    def switch(self, on_value: NumberInput, off_value: NumberInput) -> NumberWire: ...
+    def switch(self, on_value: NumberInput, off_value: NumberInput) -> NumberWire: ...  # type: ignore[overload-overlap]
 
     @overload
-    def switch(self, on_value: BooleanInput, off_value: BooleanInput) -> BooleanWire: ...
+    def switch(  # type: ignore[overload-overlap]
+        self, on_value: BooleanInput, off_value: BooleanInput
+    ) -> BooleanWire: ...
 
     @overload
-    def switch(self, on_value: CompositeInput, off_value: CompositeInput) -> CompositeWire: ...
+    def switch(  # type: ignore[overload-overlap]
+        self, on_value: CompositeInput, off_value: CompositeInput
+    ) -> CompositeWire: ...
 
     @overload
-    def switch(self, on_value: AudioInput, off_value: AudioInput) -> AudioWire: ...
+    def switch(self, on_value: AudioInput, off_value: AudioInput) -> AudioWire: ...  # type: ignore[overload-overlap]
 
     @overload
     def switch(self, on_value: VideoInput, off_value: VideoInput) -> VideoWire: ...
 
-    def switch(self, on_value, off_value):
+    def switch(
+        self,
+        on_value: NumberInput | BooleanInput | CompositeInput | AudioInput | VideoInput,
+        off_value: (
+            NumberInput | BooleanInput | CompositeInput | AudioInput | VideoInput
+        ),
+    ) -> NumberWire | BooleanWire | CompositeWire | AudioWire | VideoWire:
         if self.wire_type != SignalType.Boolean:
             raise TypeError("Can only switch BooleanWire")
-        if on_value.wire_type != off_value.wire_type:
-            raise TypeError("Switch on_value and off_value must be of the same type")
-        if on_value.wire_type == SignalType.Number:
+        if self.__is_number(on_value):
             return comp.numerical_switchbox(on_value, off_value, self)  # type: ignore[arg-type]
-        if on_value.wire_type == SignalType.Composite:
+        if self.__is_bool(on_value):
             return comp.composite_switchbox(on_value, off_value, self)  # type: ignore[arg-type]
+        assert isinstance(on_value, Wire)
         if on_value.wire_type == SignalType.Audio:
             return comp.audio_switchbox(on_value, off_value, self)  # type: ignore[arg-type]
         if on_value.wire_type == SignalType.Video:

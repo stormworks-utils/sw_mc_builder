@@ -4,16 +4,31 @@ import re
 from typing import Optional
 
 from sw_mc_lib.Components import (
+    AND,
+    NAND,
+    NOR,
+    NOT,
+    OR,
+    XOR,
     Abs,
     Add,
     ArithmeticFunction8In,
+    BooleanFunction8In,
     Clamp,
+    CompositeWriteBoolean,
+    CompositeWriteNumber,
     ConstantNumber,
+    ConstantOn,
     Divide,
+    Equal,
+    GreaterThan,
+    LessThan,
     Modulo,
     Multiply,
-    Subtract, NumericalSwitchbox, Equal, NOT, GreaterThan, LessThan, Threshold, AND, OR, NOR, XOR, NAND, UpDownCounter,
-    ConstantOn, BooleanFunction8In, CompositeWriteBoolean, CompositeWriteNumber,
+    NumericalSwitchbox,
+    Subtract,
+    Threshold,
+    UpDownCounter,
 )
 from sw_mc_lib.Types import SignalType
 
@@ -30,8 +45,8 @@ def wire_to_id(w: wire.Wire) -> str:
 
 
 def process_and(inputs: dict[str, wire.Wire]) -> Optional[tuple[str, set[wire.Wire]]]:
-    input_a = inner_optimize_numerical_boolean(inputs['a_input'])
-    input_b = inner_optimize_numerical_boolean(inputs['b_input'])
+    input_a = inner_optimize_numerical_boolean(inputs["a_input"])
+    input_b = inner_optimize_numerical_boolean(inputs["b_input"])
     if input_a is None or input_b is None:
         return None
     true_a, used_wires_a = input_a
@@ -39,9 +54,10 @@ def process_and(inputs: dict[str, wire.Wire]) -> Optional[tuple[str, set[wire.Wi
     true_func = f"({true_a}*{true_b})"
     return true_func, used_wires_a.union(used_wires_b)
 
+
 def process_or(inputs: dict[str, wire.Wire]) -> Optional[tuple[str, set[wire.Wire]]]:
-    input_a = inner_optimize_numerical_boolean(inputs['a_input'])
-    input_b = inner_optimize_numerical_boolean(inputs['b_input'])
+    input_a = inner_optimize_numerical_boolean(inputs["a_input"])
+    input_b = inner_optimize_numerical_boolean(inputs["b_input"])
     if input_a is None or input_b is None:
         return None
     true_a, used_wires_a = input_a
@@ -49,9 +65,10 @@ def process_or(inputs: dict[str, wire.Wire]) -> Optional[tuple[str, set[wire.Wir
     true_func = f"max({true_a},{true_b})"
     return true_func, used_wires_a.union(used_wires_b)
 
+
 def process_xor(inputs: dict[str, wire.Wire]) -> Optional[tuple[str, set[wire.Wire]]]:
-    input_a = inner_optimize_numerical_boolean(inputs['a_input'])
-    input_b = inner_optimize_numerical_boolean(inputs['b_input'])
+    input_a = inner_optimize_numerical_boolean(inputs["a_input"])
+    input_b = inner_optimize_numerical_boolean(inputs["b_input"])
     if input_a is None or input_b is None:
         return None
     true_a, used_wires_a = input_a
@@ -59,15 +76,18 @@ def process_xor(inputs: dict[str, wire.Wire]) -> Optional[tuple[str, set[wire.Wi
     true_func = f"abs({true_a}-{true_b})"
     return true_func, used_wires_a.union(used_wires_b)
 
+
 def process_not(inputs: dict[str, wire.Wire]) -> Optional[tuple[str, set[wire.Wire]]]:
-    input_ = inner_optimize_numerical_boolean(inputs['a_input'])
+    input_ = inner_optimize_numerical_boolean(inputs["a_input"])
     if input_ is None:
         return None
     true_func, used_wires = input_
     return f"(1-{true_func})", used_wires
 
 
-def get_input(inputs: dict[str, wire.Wire], name: str, result_wires: set[wire.Wire]) -> str:
+def get_input(
+    inputs: dict[str, wire.Wire], name: str, result_wires: set[wire.Wire]
+) -> str:
     input_value = inputs[name]
     if isinstance(input_value.producer, ComponentWrapper):
         if isinstance(input_value.producer.inner_component, ConstantNumber):
@@ -82,6 +102,7 @@ def inner_optimize_numerical_boolean(
     input_wire: wire.Wire,
     first_iteration: bool = False,
 ) -> Optional[tuple[str, set[wire.Wire]]]:
+    # pylint: disable=too-many-locals
     if isinstance(input_wire.producer, Unconnected):
         return "0", set()
     if not isinstance(input_wire.producer, ComponentWrapper):
@@ -120,7 +141,7 @@ def inner_optimize_numerical_boolean(
         true_func = f"(((sgn({a}-{min_})+1)/2)*((sgn({max_}-{a})+1)/2))"
         return true_func, result_wires
     if isinstance(inner, NOT):
-        input_ = inner_optimize_numerical_boolean(component.inputs['a_input'])
+        input_ = inner_optimize_numerical_boolean(component.inputs["a_input"])
         if input_ is None:
             return None
         true_func, used_wires = input_
@@ -153,7 +174,9 @@ def optimize_numerical_boolean(
     input_wire: wire.Wire,
     extra_count: int = 0,
 ) -> Optional[tuple[str, dict[str, wire.Wire], list[str]]]:
-    optimization_result = inner_optimize_numerical_boolean(input_wire, first_iteration=True)
+    optimization_result = inner_optimize_numerical_boolean(
+        input_wire, first_iteration=True
+    )
     if optimization_result is None:
         return None
     true_func, used_wires = optimization_result
@@ -165,7 +188,11 @@ def optimize_numerical_boolean(
         name = available_names.pop(0)
         true_func = true_func.replace(wire_to_id(wire_), name)
         wire_associations[name] = wire_
-    return true_func, wire_associations, [available_names.pop(0) for _ in range(extra_count)]
+    return (
+        true_func,
+        wire_associations,
+        [available_names.pop(0) for _ in range(extra_count)],
+    )
 
 
 def optimize_component(
@@ -197,19 +224,31 @@ def optimize_component(
     if isinstance(inner, ConstantNumber):
         return comp.function(inner.value_property.text).producer
     if isinstance(inner, BooleanFunction8In):
-        return comp.boolean_function(inner.function, **{k.replace("_input", ""): v for k, v in inputs.items()}).producer
+        return comp.boolean_function(
+            inner.function, **{k.replace("_input", ""): v for k, v in inputs.items()}
+        ).producer
     if isinstance(inner, ConstantOn):
         return comp.boolean_function("true").producer
     if isinstance(inner, AND):
-        return comp.boolean_function("x&y", inputs["a_input"], inputs["b_input"]).producer
+        return comp.boolean_function(
+            "x&y", inputs["a_input"], inputs["b_input"]
+        ).producer
     if isinstance(inner, NAND):
-        return comp.boolean_function("!(x&y)", inputs["a_input"], inputs["b_input"]).producer
+        return comp.boolean_function(
+            "!(x&y)", inputs["a_input"], inputs["b_input"]
+        ).producer
     if isinstance(inner, OR):
-        return comp.boolean_function("x|y", inputs["a_input"], inputs["b_input"]).producer
+        return comp.boolean_function(
+            "x|y", inputs["a_input"], inputs["b_input"]
+        ).producer
     if isinstance(inner, NOR):
-        return comp.boolean_function("!(x|y)", inputs["a_input"], inputs["b_input"]).producer
+        return comp.boolean_function(
+            "!(x|y)", inputs["a_input"], inputs["b_input"]
+        ).producer
     if isinstance(inner, XOR):
-        return comp.boolean_function("x^y", inputs["a_input"], inputs["b_input"]).producer
+        return comp.boolean_function(
+            "x^y", inputs["a_input"], inputs["b_input"]
+        ).producer
     if isinstance(inner, NOT):
         return comp.boolean_function("!x", inputs["a_input"]).producer
     return None
@@ -230,7 +269,7 @@ class Optimizer:
         self.in_progress: set[ComponentWrapper] = set()
 
     def find_optimizations(self, component: ComponentWrapper) -> ComponentWrapper:
-        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-locals,too-many-boolean-expressions
         if component in self.optimized_components:
             return self.optimized_components[component]
 
@@ -257,23 +296,33 @@ class Optimizer:
                 # try to optimize switch signal
                 on_prod = inputs["on_value_input"]
                 off_prod = inputs["off_value_input"]
-                optimization_result = optimize_numerical_boolean(inputs["switch_signal_input"], 2)
+                optimization_result = optimize_numerical_boolean(
+                    inputs["switch_signal_input"], 2
+                )
                 if optimization_result is not None:
-                    true_func, wire_associations, [on_name, off_name] = optimization_result
+                    true_func, wire_associations, [on_name, off_name] = (
+                        optimization_result
+                    )
                     false_func = f"(1-{true_func})"
                     optimized = comp.function(
                         f"({true_func})*{on_name}+({false_func})*{off_name}",
-                        **{on_name: on_prod, off_name: off_prod, **wire_associations}
+                        **{on_name: on_prod, off_name: off_prod, **wire_associations},
                     ).producer
             elif isinstance(component.inner_component, UpDownCounter):
-                up_optimized = inner_optimize_numerical_boolean(inputs['up_input'])
-                down_optimized = inner_optimize_numerical_boolean(inputs['down_input'])
-                reset_optimized = inner_optimize_numerical_boolean(inputs['reset_input'])
+                up_optimized = inner_optimize_numerical_boolean(inputs["up_input"])
+                down_optimized = inner_optimize_numerical_boolean(inputs["down_input"])
+                reset_optimized = inner_optimize_numerical_boolean(
+                    inputs["reset_input"]
+                )
                 min_value = component.inner_component.min_property.value
                 max_value = component.inner_component.max_property.value
                 increment_value = component.inner_component.increment_property.value
                 clamp_value = component.inner_component.clamp
-                if up_optimized is not None and down_optimized is not None and reset_optimized is not None:
+                if (
+                    up_optimized is not None
+                    and down_optimized is not None
+                    and reset_optimized is not None
+                ):
                     up_func, up_wires = up_optimized
                     down_func, down_wires = down_optimized
                     reset_func, reset_wires = reset_optimized
@@ -296,33 +345,48 @@ class Optimizer:
                         result.replace_producer(
                             comp.function(
                                 f"(1-{reset_func})*{value}+{reset_func}*{min_value}",
-                                **wire_associations
+                                **wire_associations,
                             )
                         )
                         optimized = result.producer
             elif (
-                isinstance(component.inner_component, (CompositeWriteBoolean, CompositeWriteNumber))
+                isinstance(
+                    component.inner_component,
+                    (CompositeWriteBoolean, CompositeWriteNumber),
+                )
                 and component.inner_component.start_channel_property == 1
-                and (other := component.inputs.get("composite_signal_input")) is not None
+                and (other := component.inputs.get("composite_signal_input"))
+                is not None
                 and isinstance(other.producer, ComponentWrapper)
-                and isinstance(other.producer.inner_component, type(component.inner_component))
-                and isinstance(other.producer.inner_component, (CompositeWriteBoolean, CompositeWriteNumber))
+                and isinstance(
+                    other.producer.inner_component, type(component.inner_component)
+                )
+                and isinstance(
+                    other.producer.inner_component,
+                    (CompositeWriteBoolean, CompositeWriteNumber),
+                )
                 and other.producer.inner_component.start_channel_property == 1
                 and other.producer.optimize
             ):
-                for i in range(1,33):
+                for i in range(1, 33):
                     name = f"channel_{i}_input"
                     if isinstance(component.inputs[name].producer, Unconnected):
                         component.inputs[name] = other.producer.inputs[name]
-                component.inputs["composite_signal_input"] = other.producer.inputs["composite_signal_input"]
+                component.inputs["composite_signal_input"] = other.producer.inputs[
+                    "composite_signal_input"
+                ]
 
             assert optimized is None or isinstance(optimized, ComponentWrapper)
-            self.optimized_components[component] = component if optimized is None else self.find_optimizations(optimized)
+            self.optimized_components[component] = (
+                component if optimized is None else self.find_optimizations(optimized)
+            )
             self.in_progress.remove(component)
             return component if optimized is None else optimized
 
         assert isinstance(optimized, ComponentWrapper)
-        assert isinstance(optimized.inner_component, (ArithmeticFunction8In, BooleanFunction8In))
+        assert isinstance(
+            optimized.inner_component, (ArithmeticFunction8In, BooleanFunction8In)
+        )
         self_references: set[str] = {
             name
             for name, input_wire in optimized.inputs.items()
@@ -383,7 +447,10 @@ class Optimizer:
             return component
 
         for _, name, optimized_input, input_wire in potential_optimizations:
-            assert isinstance(optimized_input.inner_component, (ArithmeticFunction8In, BooleanFunction8In))
+            assert isinstance(
+                optimized_input.inner_component,
+                (ArithmeticFunction8In, BooleanFunction8In),
+            )
             # rename variables in function to placeholder names (w_input_a, w_input_b, ...)
             function: str = optimized_input.inner_component.function
             for inner_name, inner_wire in optimized_input.inputs.items():
@@ -448,7 +515,9 @@ def optimize_arithmetic(wires: list[wire.Wire]) -> None:
     :param wires: List of ComponentWrapper to optimize
     :return: None
     """
-    optimizer = Optimizer([w.producer for w in wires if isinstance(w.producer, ComponentWrapper)])
+    optimizer = Optimizer(
+        [w.producer for w in wires if isinstance(w.producer, ComponentWrapper)]
+    )
     for wire_ in wires:
         if isinstance(wire_.producer, ComponentWrapper):
             wire_.producer = optimizer.find_optimizations(wire_.producer)

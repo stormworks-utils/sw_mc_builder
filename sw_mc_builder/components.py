@@ -6,6 +6,8 @@ from sw_mc_lib.Components import *
 from sw_mc_lib.Components.property_dropdown import DropDownOption
 from sw_mc_lib.Types import PulseMode, SignalType, TimerUnit
 
+from sw_mc_builder import script_handling
+
 from .component_wrapper import ComponentWrapper
 from .pseudo_components import InputPlaceholder, Placeholder, Unconnected
 from .wire import (
@@ -21,7 +23,6 @@ from .wire import (
     VideoWire,
     Wire,
 )
-from sw_mc_builder import script_handling
 
 Number = float | int
 
@@ -1036,7 +1037,11 @@ def lua_script_file(
     Takes a lua script from a file and embeds it. The file may use dependencies, which are automatically resolved.
     See lua_script for more information.
     """
-    return lua_script(script_handling.resolve_and_verify_script(file_path), composite_input, video_input)
+    return lua_script(
+        script_handling.resolve_and_verify_script(file_path),
+        composite_input,
+        video_input,
+    )
 
 
 def property_dropdown(

@@ -1,7 +1,6 @@
 import copy
 import os
 import sys
-
 from argparse import ArgumentParser
 from functools import cache
 from pathlib import Path
@@ -10,8 +9,8 @@ from typing import Optional
 from sw_mc_lib import XMLParserElement, format, parse
 from sw_mc_lib.Types import ComponentType
 
-from sw_mc_builder import Microcontroller
-from sw_mc_builder._utils import PROPERTY_IDS, BUILDER_IDENTIFIER
+from sw_mc_builder._utils import BUILDER_IDENTIFIER
+from sw_mc_builder.microcontroller import Microcontroller
 
 
 @cache
@@ -39,14 +38,19 @@ def get_stormworks_path() -> Path:
                         base_paths.add(Path(line.split("\t")[2].strip('"')).resolve())
 
         for path in base_paths:
-            stormworks_paths.append(path / "steamapps/compatdata/573090/pfx/drive_c/users/steamuser/AppData/Roaming/Stormworks/")
+            stormworks_paths.append(
+                path
+                / "steamapps/compatdata/573090/pfx/drive_c/users/steamuser/AppData/Roaming/Stormworks/"
+            )
 
     stormworks_paths = [p for p in stormworks_paths if p.is_dir()]
 
     if len(stormworks_paths) == 0:
         raise FileNotFoundError("Could not find Stormworks installation path.")
-    elif len(stormworks_paths) > 1:
-        raise RuntimeError(f"Found multiple Stormworks installation paths: {stormworks_paths}")
+    if len(stormworks_paths) > 1:
+        raise RuntimeError(
+            f"Found multiple Stormworks installation paths: {stormworks_paths}"
+        )
     return stormworks_paths[0]
 
 
@@ -57,8 +61,7 @@ def name_to_path(name: str, kind: str) -> Path:
 
 
 def extract_mcs_from_vehicle(
-    vehicle_path: Path,
-    relevant_names: set[str]
+    vehicle_path: Path, relevant_names: set[str]
 ) -> Optional[tuple[XMLParserElement, list[XMLParserElement]]]:
     with vehicle_path.open("r", encoding="utf-8") as f:
         vehicle_xml: XMLParserElement = parse(f.read())
@@ -96,7 +99,9 @@ def extract_mcs_from_vehicle(
     return vehicle_xml, relevant_mcs
 
 
-def find_with_id(element: XMLParserElement, component_type: str) -> list[XMLParserElement]:
+def find_with_id(
+    element: XMLParserElement, component_type: str
+) -> list[XMLParserElement]:
     assert element.tag in ("microprocessor", "microprocessor_definition")
     group = element.get_child_by_tag_strict("group")
     components = group.get_child_by_tag_strict("components")
@@ -123,7 +128,9 @@ def find_and_match_property(
         assert prop_name is not None
         for source_prop in source_props:
             source_obj = source_prop.get_child_by_tag_strict("object")
-            source_name = source_obj.attributes.get("name", source_obj.attributes.get("n"))
+            source_name = source_obj.attributes.get(
+                "name", source_obj.attributes.get("n")
+            )
             assert source_name is not None
             if prop_name == source_name:
                 results.append((target_obj, source_obj))
@@ -131,35 +138,51 @@ def find_and_match_property(
     return results
 
 
-def merge_attributes(target: XMLParserElement, source: XMLParserElement, attr_name: str) -> None:
+def merge_attributes(
+    target: XMLParserElement, source: XMLParserElement, attr_name: str
+) -> None:
     if attr_name in source.attributes:
         target.attributes[attr_name] = source.attributes[attr_name]
     elif attr_name in target.attributes:
         del target.attributes[attr_name]
 
 
-def merge_number_properties(target: XMLParserElement, source: XMLParserElement, prop_name: str) -> None:
+def merge_number_properties(
+    target: XMLParserElement, source: XMLParserElement, prop_name: str
+) -> None:
     target_val = target.get_child_by_tag_strict(prop_name)
     if source_val := source.get_child_by_tag(prop_name):
         target_val.attributes = source_val.attributes
 
 
 def merge_properties(target: XMLParserElement, source: XMLParserElement) -> None:
-    for target_prop, source_prop in find_and_match_property(target, source, ComponentType.PropertyText):
+    for target_prop, source_prop in find_and_match_property(
+        target, source, ComponentType.PropertyText
+    ):
         merge_attributes(target_prop, source_prop, "v")
-    for target_prop, source_prop in find_and_match_property(target, source, ComponentType.PropertyNumber):
+    for target_prop, source_prop in find_and_match_property(
+        target, source, ComponentType.PropertyNumber
+    ):
         merge_number_properties(target_prop, source_prop, "v")
-    for target_prop, source_prop in find_and_match_property(target, source, ComponentType.PropertyToggle):
+    for target_prop, source_prop in find_and_match_property(
+        target, source, ComponentType.PropertyToggle
+    ):
         merge_attributes(target_prop, source_prop, "v")
-    for target_prop, source_prop in find_and_match_property(target, source, ComponentType.PropertySlider):
+    for target_prop, source_prop in find_and_match_property(
+        target, source, ComponentType.PropertySlider
+    ):
         merge_number_properties(target_prop, source_prop, "v")
-    for target_prop, source_prop in find_and_match_property(target, source, ComponentType.PropertyDropdown):
+    for target_prop, source_prop in find_and_match_property(
+        target, source, ComponentType.PropertyDropdown
+    ):
         possible_values: dict[str, str] = {}
         items = target_prop.get_child_by_tag_strict("items")
         for child in items.children:
             if child.tag == "i":
                 possible_values[(child.attributes["l"])] = str(len(possible_values))
-        if (source_items := source_prop.get_child_by_tag("items")) and (source_index := source_prop.attributes.get("i")):
+        if (source_items := source_prop.get_child_by_tag("items")) and (
+            source_index := source_prop.attributes.get("i")
+        ):
             if int(source_index) < len(source_items.children):
                 source_item = source_items.children[int(source_index)]
                 if source_item.tag == "i":
@@ -196,6 +219,7 @@ def replace_in_vehicle(
 
 
 def handle_mcs(*mcs: Microcontroller) -> None:
+    # pylint: disable=protected-access
     if len(mcs) == 0:
         raise ValueError("At least one microcontroller must be provided")
     parser = ArgumentParser(description="Microcontroller collection")
@@ -203,14 +227,14 @@ def handle_mcs(*mcs: Microcontroller) -> None:
         "--microcontroller",
         "-m",
         action="store_true",
-        help="Export microcontrollers to Stormworks microcontroller directory"
+        help="Export microcontrollers to Stormworks microcontroller directory",
     )
     parser.add_argument(
         "--vehicle",
         "-v",
         type=str,
         nargs="*",
-        help="Export microcontrollers to vehicles"
+        help="Export microcontrollers to vehicles",
     )
     parser.add_argument(
         "--select",
@@ -226,7 +250,9 @@ def handle_mcs(*mcs: Microcontroller) -> None:
     compiled: dict[str, tuple[Microcontroller, XMLParserElement]] = {}
     for mc in mcs:
         name: str = mc._mc.name
-        if selected_names and not any(selected_name in name for selected_name in selected_names):
+        if selected_names and not any(
+            selected_name in name for selected_name in selected_names
+        ):
             continue
         if name in compiled:
             raise ValueError(f"Duplicate microcontroller name: {name}")

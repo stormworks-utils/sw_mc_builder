@@ -23,8 +23,8 @@ from sw_mc_lib.Types import NodeMode, SignalType, TooltipMode
 from sw_mc_builder.component_wrapper import ComponentWrapper
 from sw_mc_builder.pseudo_components import InputPlaceholder, PseudoComponent
 from sw_mc_builder.wire import BooleanInput, NumberInput, Wire
-from ._utils import PROPERTIES, BUILDER_IDENTIFIER
 
+from ._utils import BUILDER_IDENTIFIER, PROPERTIES
 from .optimizer import optimize_arithmetic
 
 
@@ -66,7 +66,6 @@ class Microcontroller:
                 self._warned_placement = True
             self._mc.width = max(self._mc.width, position.x + 1)
             self._mc.length = max(self._mc.length, position.z + 1)
-
 
     def place_input(self, input_: Wire, x: int = 0, y: int = 0) -> None:
         if not isinstance(input_.producer, InputPlaceholder):
@@ -157,7 +156,9 @@ class Microcontroller:
             raise TypeError("Property must be a valid property component")
         self._additional_components.append(property.producer)
 
-    def add_text_property(self, name: str, content: str, force_property: bool = False) -> None:
+    def add_text_property(
+        self, name: str, content: str, force_property: bool = False
+    ) -> None:
         component = ComponentWrapper(
             PropertyText(-1, Position(0, 0), name, content),
             {},
@@ -214,7 +215,11 @@ class Microcontroller:
 
     def _resolve_and_optimize(self) -> XMLParserElement:
         if self.optimize:
-            wires = [wire for component in self._additional_components for wire in component.inputs.values()]
+            wires = [
+                wire
+                for component in self._additional_components
+                for wire in component.inputs.values()
+            ]
             for node, _ in self._placed_outputs:
                 wires.append(node)
             optimize_arithmetic(wires)
@@ -231,7 +236,11 @@ class Microcontroller:
         assert data.tag == "data"
         data.attributes["desc"] = BUILDER_IDENTIFIER
 
-        properties = {str(prop.component_id): prop for prop in self._properties if prop.force_property}
+        properties = {
+            str(prop.component_id): prop
+            for prop in self._properties
+            if prop.force_property
+        }
         components = group.children[1]
         assert components.tag == "components"
         for component in components.children:

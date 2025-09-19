@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from sw_mc_lib.Types import SignalType
-from sw_mc_builder import wire as wire_
 
 import sw_mc_builder.components as comp
+from sw_mc_builder import wire as wire_
+
 
 def bool_to_int(
     value: wire_.BooleanWire, true_value: int = 1, false_value: int = 0

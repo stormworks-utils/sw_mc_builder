@@ -1,3 +1,4 @@
+import sys
 from functools import cache
 
 import tumfl
@@ -18,7 +19,7 @@ def verify_script(script: str) -> None:
             print(e.full_error)
         else:
             print(e)
-        exit(1)
+        sys.exit(1)
 
 
 @cache
@@ -33,5 +34,5 @@ def resolve_and_verify_script(script_path: str) -> str:
             print(e.full_error)
         else:
             print(e)
-        exit(1)
+        sys.exit(1)
     return tumfl.format(ast)
