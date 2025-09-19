@@ -1,5 +1,5 @@
-import sys
 import runpy
+import sys
 from argparse import ArgumentParser
 from contextlib import contextmanager
 from pathlib import Path
@@ -33,6 +33,7 @@ def temporary_argv(new_argv: list[str]) -> Generator[None, None, None]:
     finally:
         sys.argv = old
 
+
 def execute_child_script(child_path: Path, args: list[str]) -> None:
     resolved_child_path = str(child_path.resolve())
     # argv[0] will be the script filename (often useful to child)
@@ -40,6 +41,7 @@ def execute_child_script(child_path: Path, args: list[str]) -> None:
     with temporary_argv(argv):
         # run as if executed directly: __name__ == "__main__"
         runpy.run_path(resolved_child_path, run_name="__main__")
+
 
 def initialize_mc(name: Path) -> None:
     name = name.with_suffix(".py")
@@ -54,11 +56,15 @@ def initialize_mc(name: Path) -> None:
 def main() -> None:
     parser = ArgumentParser()
     subparsers = parser.add_subparsers()
-    init = subparsers.add_parser("init", help="Initialize a new microcontroller project")
+    init = subparsers.add_parser(
+        "init", help="Initialize a new microcontroller project"
+    )
     init.add_argument("name", type=Path, help="Name of the microcontroller project")
     init.set_defaults(func="init")
     execute = subparsers.add_parser("execute", help="Execute a microcontroller project")
-    execute.add_argument("name", type=Path, help="Path to the microcontroller definition file")
+    execute.add_argument(
+        "name", type=Path, help="Path to the microcontroller definition file"
+    )
     parser_arguments(execute)
     execute.set_defaults(func="execute")
     args = parser.parse_args()
