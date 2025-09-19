@@ -10,7 +10,13 @@ A framework for building microcontrollers in Stormworks: Build and Rescue using 
 - Integration with `tumfl` for lua verification and minification.
 - Implicit constant number creation.
 
-## Example
+## Getting started
+
+After installing, use the `sw_mc_builder` module to create microcontrollers.
+
+```commandline
+sw_mc_builder init test_mc.py
+```
 
 ```python
 from sw_mc_builder import *
@@ -26,6 +32,8 @@ mc.place_input(input1, 0, 0)
 mc.place_input(input2, 0, 1)
 mc.place_output(added, "Added", x=1, y=0)
 mc.place_output(highest, "Highest", x=1, y=1)
+
+handle_mcs(mc)
 ```
 
 ## Design
@@ -120,4 +128,57 @@ delayed = comp.function("x", input1).stop_optimization()
 # Disable optimization for the entire microcontroller
 mc = Microcontroller("name")
 mc.stop_optimization()
+```
+
+## Working principles
+
+### Microcontroller handler
+
+The `handle_mcs` function is the entity that will bring your microcontrollers to life.
+It manages the actual generation (including optimization and layout) and placement of microcontrollers.
+It can replace existing microcontrollers in vehicles, or simply make them available ingame.
+It can handle multiple microcontrollers at once.
+
+#### Command line arguments
+
+ - `-m` or `--microcontroller`: Export generated microcontrollers to the games microcontrollers directory.
+ - `-v` or `--vehicle`: Replace microcontrollers in vehicles in the games vehicles directory. Will reserve parameter settings.
+ - `-s` or `--select`: Only process microcontrollers with the given, comma separated, names.
+
+### Recursive definitions
+
+There is a special component, a `Placeholder`, which can be used to create recursive definitions.
+A `Placeholder` must be resolved before submitting the microcontroller to `handle_mcs`, otherwise an error will be raised.
+
+```python
+from sw_mc_builder import *
+
+counter = comp.placeholder(SignalType.Number)
+counter.replace_producer(counter + 1)
+```
+
+### Input and output management
+
+Inputs will usually be the first thing to be defined in a microcontroller. They produce `Wire` objects that can be used in the microcontroller.
+If an input is used in any calculation that is present in an output, wi has to be placed in the microcontroller.
+
+Outputs are simply defined by placing them in a microcontroller.
+
+If inputs or outputs are outside of the boundaries of the microcontroller, a warning will be generated, and the microcontroller expanded.
+
+```python
+from sw_mc_builder import *
+
+input1 = comp.input(SignalType.Number, "Input 1")
+input2 = comp.input(SignalType.Number, "Input 2")
+
+# Program logic
+added = input1 + input2 * 2
+
+mc = Microcontroller("Example MC")
+mc.place_input(input1, 0, 0)
+mc.place_input(input2, 0, 1)
+mc.place_output(added, "Added", x=1, y=0)
+
+handle_mcs(mc)
 ```
