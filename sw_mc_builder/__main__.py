@@ -71,7 +71,7 @@ def main() -> None:
     if args.func == "init":
         initialize_mc(args.name)
     elif args.func == "execute":
-        execute_child_script(args.name, sys.argv[2:])
+        execute_child_script(args.name, sys.argv[3:])
 
 
 if __name__ == "__main__":
