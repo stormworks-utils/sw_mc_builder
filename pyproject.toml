@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "sw_mc_builder"
+version = "0.0.1"
+description = "Framework for building Stormworks microcontrollers"
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["stormworks", "microcontroller", "builder", "automation"]
+license = "MIT"
+authors = [{ name = "Fabian Wunsch" }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha",
+    "Operating System :: OS Independent",
+    "Topic :: Games/Entertainment :: Simulation",
+    "Typing :: Typed",
+]
+dependencies = ["tumfl>=0.3.14", "sw_mc_lib>=0.4.7"]
+
+[project.optional-dependencies]
+dev = ["black", "isort", "pip-tools", "mypy", "flake8", "coverage", "pylint"]
+
+[project.urls]
+homepage = "https://github.com/stormworks-utils/sw_mc_builder"
+repository = "https://github.com/stormworks-utils/sw_mc_builder"
+
+[tool.setuptools]
+packages = [
+    "sw_mc_builder",
+]
+
+[project.scripts]
+tumfl = "sw_mc_builder.__main__:main"
