@@ -63,7 +63,7 @@ def main() -> None:
     init.add_argument("name", type=Path, help="Name of the microcontroller project")
     init.set_defaults(func="init")
     run = subparsers.add_parser(
-        "Run", help="Execute a microcontroller project", aliases=["r"]
+        "run", help="Execute a microcontroller project", aliases=["r"]
     )
     run.add_argument(
         "name", type=Path, help="Path to the microcontroller definition file"
