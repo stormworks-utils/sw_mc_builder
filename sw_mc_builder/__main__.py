@@ -71,7 +71,11 @@ def main() -> None:
     parser_arguments(run)
     run.set_defaults(func="run")
     args = parser.parse_args()
-    if args.func == "init":
+    if not hasattr(args, "func"):
+        # No subcommand provided
+        parser.print_help()
+        sys.exit(1)
+    elif args.func == "init":
         initialize_mc(args.name)
     elif args.func == "run":
         run_child_script(args.name, sys.argv[3:])
