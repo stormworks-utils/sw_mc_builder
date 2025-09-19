@@ -4,7 +4,7 @@
 #
 #    pip-compile pyproject.toml
 #
-sw-mc-lib==0.4.7
+sw-mc-lib==0.4.8
     # via sw_mc_builder (pyproject.toml)
 tumfl==0.3.14
     # via sw_mc_builder (pyproject.toml)

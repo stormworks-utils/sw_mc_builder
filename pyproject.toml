@@ -19,7 +19,7 @@ classifiers = [
     "Topic :: Games/Entertainment :: Simulation",
     "Typing :: Typed",
 ]
-dependencies = ["tumfl>=0.3.14", "sw_mc_lib>=0.4.7"]
+dependencies = ["tumfl>=0.3.14", "sw_mc_lib>=0.4.8"]
 
 [project.optional-dependencies]
 dev = ["black", "isort", "pip-tools", "mypy", "flake8", "coverage", "pylint"]
@@ -34,4 +34,4 @@ packages = [
 ]
 
 [project.scripts]
-tumfl = "sw_mc_builder.__main__:main"
+sw_mc_builder = "sw_mc_builder.__main__:main"
