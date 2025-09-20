@@ -6,7 +6,7 @@
 #
 pillow==11.3.0
     # via sw-mc-lib
-sw-mc-lib==0.4.10
+sw-mc-lib==0.4.13
     # via sw_mc_builder (pyproject.toml)
 tumfl==0.3.14
     # via sw_mc_builder (pyproject.toml)

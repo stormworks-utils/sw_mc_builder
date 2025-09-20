@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sw_mc_builder"
-version = "0.0.8"
+version = "0.0.9"
 description = "Framework for building Stormworks microcontrollers"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,7 +19,7 @@ classifiers = [
     "Topic :: Games/Entertainment :: Simulation",
     "Typing :: Typed",
 ]
-dependencies = ["tumfl>=0.3.14", "sw_mc_lib>=0.4.10"]
+dependencies = ["tumfl>=0.3.14", "sw_mc_lib>=0.4.13"]
 
 [project.optional-dependencies]
 dev = ["black", "isort", "pip-tools", "mypy", "flake8", "coverage", "pylint"]
