@@ -135,24 +135,6 @@ The `Wire` class has a few functions that are possible with function blocks.
 - `sgn()`: Sign of the wire.
 - `switch(on_wire, off_wire)`: Switch between two wires based on the boolean value of the wire.
 
-### Optimizer
-
-All arithmetic operations are collapsed into a single function block in order to reduce latency.
-This can be disabled per node or per mc.
-
-```python
-from sw_mc_builder import *
-
-input1 = comp.input(SignalType.Number, "Input 1")
-
-# Delay signal by one tick, disabling optimization for this node
-delayed = comp.function("x", input1).stop_optimization()
-
-# Disable optimization for the entire microcontroller
-mc = Microcontroller("name")
-mc.stop_optimization()
-```
-
 ## Working principles
 
 ### Microcontroller handler
@@ -206,3 +188,28 @@ mc.place_output(added, "Added", x=1, y=0)
 if __name__ == "__main__":
     handle_mcs(mc)
 ```
+
+### Optimizer
+
+All arithmetic operations are collapsed into a single function block in order to reduce latency.
+This can be disabled per node or per mc.
+
+```python
+from sw_mc_builder import *
+
+input1 = comp.input(SignalType.Number, "Input 1")
+
+# Delay signal by one tick, disabling optimization for this node
+delayed = comp.function("x", input1).stop_optimization()
+
+# Disable optimization for the entire microcontroller
+mc = Microcontroller("name")
+mc.stop_optimization()
+```
+
+### Microcontroller thumbnails
+
+Microcontroller thumbnails can either be included as a `.png` file using `mc.add_image_from_file(Path("path/to/thumbnail.png"))`,
+or be written as a list of lists of booleans using `mc.add_image_from_list(image_data)`.
+
+Note: Images will automatically be resized to 16x16 pixels and converted to black and white.
