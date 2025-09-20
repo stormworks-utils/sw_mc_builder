@@ -78,7 +78,15 @@ def main() -> None:
     elif args.func == "init":
         initialize_mc(args.name)
     elif args.func == "run":
-        run_child_script(args.name, sys.argv[3:])
+        child_args: list[str] = []
+        if args.microcontroller:
+            child_args.append("--microcontroller")
+        if args.select:
+            child_args.extend(["--select", args.select])
+        if args.vehicle:
+            child_args.append("--vehicle")
+            child_args.extend(args.vehicle)
+        run_child_script(args.name, child_args)
 
 
 if __name__ == "__main__":

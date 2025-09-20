@@ -12,8 +12,7 @@ def parser_arguments(parser: ArgumentParser) -> None:
         "--vehicle",
         "-v",
         type=str,
-        nargs="*",
-        help="Export microcontrollers to vehicles",
+        help="Export microcontrollers to vehicles. Separated by commas.",
     )
     parser.add_argument(
         "--select",
