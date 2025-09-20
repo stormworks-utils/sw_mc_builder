@@ -1,4 +1,5 @@
 import warnings
+from pathlib import Path
 from typing import Optional
 
 from sw_mc_lib import Node, NodePosition, Position, XMLParserElement
@@ -12,6 +13,7 @@ from sw_mc_lib.Components import (
     TooltipNumber,
 )
 from sw_mc_lib.layout import layout_mc
+from sw_mc_lib.Microcontroller import MCImage
 from sw_mc_lib.Microcontroller import Microcontroller as SWMicrocontroller
 from sw_mc_lib.optimizer import (
     optimize_composite_writes,
@@ -50,6 +52,15 @@ class Microcontroller:
 
     def stop_optimization(self) -> None:
         self.optimize = False
+
+    def add_image_from_file(self, file_path: Path) -> None:
+        self._mc.image = MCImage.from_png(file_path)
+
+    def add_image_from_list(self, pixels: list[list[bool]]) -> None:
+        self._mc.image = MCImage(pixels)
+
+    def save_image(self, path: Path) -> None:
+        self._mc.image.to_png(path)
 
     def _validate_placement(self, position: NodePosition) -> None:
         for node in self._mc.nodes:

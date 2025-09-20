@@ -247,6 +247,7 @@ def handle_mcs(*mcs: Microcontroller) -> None:
             with mc_path.open("w", encoding="utf-8") as f:
                 f.write(format(xml_mc))
                 print(f'Wrote microcontroller "{name}" to microcontroller directory.')
+            mc._mc.image.to_sw_png(mc_path.with_suffix(".png"))
     if args.vehicle:
         for vehicle_name in args.vehicle:
             replace_in_vehicle(vehicle_name, compiled)

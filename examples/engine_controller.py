@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from sw_mc_builder import *
 
 starter = comp.input(SignalType.Boolean, "Starter")
@@ -48,6 +50,7 @@ fuel_multi.replace_producer(
 engine_fuel = engine_throttle * fuel_multi
 
 mc = Microcontroller("Engine Controller", 3, 3, "Constant RPS engine controller")
+mc.add_image_from_file(Path(__file__).parent / "engine_controller.png")
 mc.place_input(starter, 0, 2)
 mc.place_input(engine_data, 2, 1)
 mc.place_input(engine_rps, 1, 1)
