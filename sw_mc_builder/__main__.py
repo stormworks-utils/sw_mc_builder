@@ -5,8 +5,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
 
-from sw_mc_builder._handling_arguments import parser_arguments
 from sw_mc_builder import _utils
+from sw_mc_builder._handling_arguments import parser_arguments
 
 BLANK_MC: str = """\
 from sw_mc_builder import *
