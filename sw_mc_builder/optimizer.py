@@ -375,12 +375,14 @@ class Optimizer:
                 component.inputs["composite_signal_input"] = other.producer.inputs[
                     "composite_signal_input"
                 ]
+                optimized = component
 
             assert optimized is None or isinstance(optimized, ComponentWrapper)
             self.optimized_components[component] = (
                 component if optimized is None else self.find_optimizations(optimized)
             )
-            self.in_progress.remove(component)
+            if component in self.in_progress:
+                self.in_progress.remove(component)
             return component if optimized is None else optimized
 
         assert isinstance(optimized, ComponentWrapper)
