@@ -22,6 +22,7 @@ from sw_mc_lib.optimizer import (
 )
 from sw_mc_lib.Types import NodeMode, SignalType, TooltipMode
 
+from sw_mc_builder._utils import normalize_path
 from sw_mc_builder.component_wrapper import ComponentWrapper
 from sw_mc_builder.pseudo_components import InputPlaceholder, PseudoComponent
 from sw_mc_builder.wire import BooleanInput, NumberInput, Wire
@@ -53,8 +54,8 @@ class Microcontroller:
     def stop_optimization(self) -> None:
         self.optimize = False
 
-    def add_image_from_file(self, file_path: Path) -> None:
-        self._mc.image = MCImage.from_png(file_path)
+    def add_image_from_file(self, file: str | Path) -> None:
+        self._mc.image = MCImage.from_png(normalize_path(file))
 
     def add_image_from_list(self, pixels: list[list[bool]]) -> None:
         self._mc.image = MCImage(pixels)
