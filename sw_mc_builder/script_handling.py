@@ -22,7 +22,7 @@ def verify_script(script: str, minify: bool = True) -> str:
         sys.exit(1)
     if minify:
         tumfl.minify(parsed)
-        return tumfl.format(parsed)
+        return tumfl.format(parsed, style=tumfl.formatter.MinifiedStyle)
     return script
 
 
