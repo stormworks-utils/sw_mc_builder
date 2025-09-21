@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Generator
 
 from sw_mc_builder._handling_arguments import parser_arguments
+from sw_mc_builder import _utils
 
 BLANK_MC: str = """\
 from sw_mc_builder import *
@@ -40,6 +41,10 @@ def run_child_script(child_path: Path, args: list[str]) -> None:
     # argv[0] will be the script filename (often useful to child)
     argv: list[str] = [resolved_child_path, *args]
     with temporary_argv(argv):
+        # As imports are not reevaluated, we need to reset the main path
+        _utils.MAIN_PATH = Path(resolved_child_path).parent.resolve()
+        _utils.INCLUDE_PATHS.clear()
+        _utils.INCLUDE_PATHS.append(_utils.MAIN_PATH)
         # run as if executed directly: __name__ == "__main__"
         runpy.run_path(resolved_child_path, run_name="__main__")
 
