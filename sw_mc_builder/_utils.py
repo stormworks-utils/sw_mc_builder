@@ -26,3 +26,27 @@ PROPERTIES = (
 PROPERTY_IDS: set[str] = {str(cls(0, Position()).type.value) for cls in PROPERTIES}
 
 BUILDER_IDENTIFIER: str = "Built with sw_mc_builder version 1"
+
+INCLUDE_PATHS: list[Path] = [MAIN_PATH]
+
+
+def normalize_path(path: Path) -> Path:
+    """
+    Normalize a path by resolving it and converting it to an absolute path.
+    """
+    if (MAIN_PATH / path).exists():
+        return (MAIN_PATH / path).resolve()
+    for include_path in INCLUDE_PATHS:
+        combined_path = (include_path / path).resolve()
+        if combined_path.exists():
+            return combined_path
+    raise FileNotFoundError(f"Could not find path: {path}")
+
+
+def add_include_path(path: Path) -> None:
+    """
+    Add a path to the list of include paths for resolving scripts and script dependencies.
+    """
+    normalized_path = normalize_path(path)
+    if normalized_path not in INCLUDE_PATHS:
+        INCLUDE_PATHS.append(normalized_path)

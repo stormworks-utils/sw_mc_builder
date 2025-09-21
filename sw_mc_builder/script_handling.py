@@ -1,9 +1,10 @@
 import sys
 from functools import cache
+from pathlib import Path
 
 import tumfl
 
-from ._utils import MAIN_PATH
+from ._utils import INCLUDE_PATHS, normalize_path
 
 
 @cache
@@ -32,7 +33,7 @@ def resolve_and_verify_script(script_path: str) -> str:
     Resolve dependencies in the given script and verify its correctness.
     """
     try:
-        ast = tumfl.resolve_recursive(MAIN_PATH / script_path, [MAIN_PATH])
+        ast = tumfl.resolve_recursive(normalize_path(Path(script_path)), INCLUDE_PATHS)
     except tumfl.error.TumflError as e:
         if isinstance(e, tumfl.error.ParserError):
             print(e.full_error)
