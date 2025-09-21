@@ -7,19 +7,23 @@ from ._utils import MAIN_PATH
 
 
 @cache
-def verify_script(script: str) -> None:
+def verify_script(script: str, minify: bool = True) -> str:
     """
     Verify the given script for correctness.
     This is a placeholder function and should be implemented with actual verification logic.
     """
     try:
-        tumfl.parse(script)
+        parsed = tumfl.parse(script)
     except tumfl.error.TumflError as e:
         if isinstance(e, tumfl.error.ParserError):
             print(e.full_error)
         else:
             print(e)
         sys.exit(1)
+    if minify:
+        tumfl.minify(parsed)
+        return tumfl.format(parsed)
+    return script
 
 
 @cache

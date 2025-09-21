@@ -1010,12 +1010,13 @@ def lua_script(
     script: str,
     composite_input: CompositeInput = None,
     video_input: VideoInput = None,
+    minify: bool = True,
 ) -> tuple[CompositeWire, VideoWire]:
     """
     Executes a Lua script to process composite and video inputs and produce composite and video outputs.
     The script must define two functions: processComposite(input) and processVideo(input).
     """
-    script_handling.verify_script(script)
+    script = script_handling.verify_script(script, minify)
     component = ComponentWrapper(
         LuaScript(0, Position(), script),
         {
@@ -1032,6 +1033,7 @@ def lua_script_file(
     file_path: str,
     composite_input: CompositeInput = None,
     video_input: VideoInput = None,
+    minify: bool = True,
 ) -> tuple[CompositeWire, VideoWire]:
     """
     Takes a lua script from a file and embeds it. The file may use dependencies, which are automatically resolved.
@@ -1041,6 +1043,7 @@ def lua_script_file(
         script_handling.resolve_and_verify_script(file_path),
         composite_input,
         video_input,
+        minify,
     )
 
 
