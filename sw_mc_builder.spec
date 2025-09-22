@@ -6,7 +6,10 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[],
-    hiddenimports=[],
+    hiddenimports=[
+        'json', 'base64', 'csv', 'datetime', 'fractions',
+        'itertools', 'math', 're', 'string', 'struct','time',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
