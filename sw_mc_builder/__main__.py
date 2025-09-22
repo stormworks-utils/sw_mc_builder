@@ -37,16 +37,18 @@ def temporary_argv(new_argv: list[str]) -> Generator[None, None, None]:
 
 
 def run_child_script(child_path: Path, args: list[str]) -> None:
-    resolved_child_path = str(child_path.resolve())
+    resolved_child_path = child_path.resolve()
     # argv[0] will be the script filename (often useful to child)
-    argv: list[str] = [resolved_child_path, *args]
+    argv: list[str] = [str(resolved_child_path), *args]
     with temporary_argv(argv):
         # As imports are not reevaluated, we need to reset the main path
-        _utils.MAIN_PATH = Path(resolved_child_path).parent.resolve()
+        _utils.MAIN_PATH = resolved_child_path.parent
         _utils.INCLUDE_PATHS.clear()
         _utils.INCLUDE_PATHS.append(_utils.MAIN_PATH)
+        if str(resolved_child_path.parent) not in sys.path:
+            sys.path.insert(0, str(resolved_child_path.parent))
         # run as if executed directly: __name__ == "__main__"
-        runpy.run_path(resolved_child_path, run_name="__main__")
+        runpy.run_path(str(resolved_child_path), run_name="__main__")
 
 
 def initialize_mc(name: Path) -> None:
