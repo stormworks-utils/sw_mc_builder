@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 import inspect
 import re
 import warnings
@@ -468,38 +469,79 @@ class Wire(Generic[T]):
             raise TypeError("Can only sqrt NumberWire")
         return comp.function("sqrt(x)", self)  # type: ignore[arg-type]
 
-    @overload
-    def switch(self, on_value: NumberInput, off_value: NumberInput) -> NumberWire: ...  # type: ignore[overload-overlap]
+    # These overloads are a mess, but they are the most precise I can make them
 
     @overload
-    def switch(  # type: ignore[overload-overlap]
-        self, on_value: BooleanInput, off_value: BooleanInput
+    def switch(
+        self,
+        on_value: NumberWire,
+        off_value: NumberWire | float | builtins.int,
+    ) -> NumberWire: ...
+
+    @overload
+    def switch(
+        self,
+        on_value: NumberWire | float | builtins.int,
+        off_value: NumberWire,
+    ) -> NumberWire: ...
+
+    @overload
+    def switch(
+        self, on_value: BooleanWire, off_value: BooleanWire | bool
     ) -> BooleanWire: ...
 
     @overload
-    def switch(  # type: ignore[overload-overlap]
-        self, on_value: CompositeInput, off_value: CompositeInput
+    def switch(
+        self, on_value: BooleanWire | bool, off_value: BooleanWire
+    ) -> BooleanWire: ...
+
+    # There is no way to tell a literal bool from a literal int in overloads.
+    # They will be treated correctly in the implementation though.
+    @overload
+    def switch(
+        self, on_value: bool | builtins.int, off_value: bool | builtins.int
+    ) -> BooleanWire | NumberWire: ...
+
+    @overload
+    def switch(
+        self, on_value: CompositeWire, off_value: CompositeWire
     ) -> CompositeWire: ...
 
     @overload
-    def switch(self, on_value: AudioInput, off_value: AudioInput) -> AudioWire: ...  # type: ignore[overload-overlap]
+    def switch(self, on_value: AudioWire, off_value: AudioWire) -> AudioWire: ...
 
     @overload
-    def switch(self, on_value: VideoInput, off_value: VideoInput) -> VideoWire: ...
+    def switch(self, on_value: VideoWire, off_value: VideoWire) -> VideoWire: ...
 
     def switch(
         self,
-        on_value: NumberInput | BooleanInput | CompositeInput | AudioInput | VideoInput,
+        on_value: (
+            NumberWire
+            | float
+            | builtins.int
+            | BooleanWire
+            | bool
+            | CompositeWire
+            | AudioWire
+            | VideoWire
+        ),
         off_value: (
-            NumberInput | BooleanInput | CompositeInput | AudioInput | VideoInput
+            NumberWire
+            | float
+            | builtins.int
+            | BooleanWire
+            | bool
+            | CompositeWire
+            | AudioWire
+            | VideoWire
         ),
     ) -> NumberWire | BooleanWire | CompositeWire | AudioWire | VideoWire:
         if self.wire_type != SignalType.Boolean:
             raise TypeError("Can only switch BooleanWire")
-        if self.__is_number(on_value):
-            return comp.numerical_switchbox(on_value, off_value, self)  # type: ignore[arg-type]
         if self.__is_bool(on_value):
             return comp.composite_switchbox(on_value, off_value, self)  # type: ignore[arg-type]
+        if self.__is_number(on_value):
+            return comp.numerical_switchbox(on_value, off_value, self)  # type: ignore[arg-type]
         assert isinstance(on_value, Wire)
         if on_value.wire_type == SignalType.Audio:
             return comp.audio_switchbox(on_value, off_value, self)  # type: ignore[arg-type]
@@ -507,7 +549,12 @@ class Wire(Generic[T]):
             return comp.video_switchbox(on_value, off_value, self)  # type: ignore[arg-type]
         if on_value.wire_type == SignalType.Boolean:
             return comp.or_(comp.and_(self, on_value), comp.and_(comp.not_(self), off_value))  # type: ignore[arg-type]
-        raise NotImplementedError("Switch on not implemented")
+        if on_value.wire_type == SignalType.Composite:
+            return comp.composite_switchbox(on_value, off_value, self)  # type: ignore[arg-type]
+        raise NotImplementedError(f"Switch on {on_value} not implemented")
+
+    def __repr__(self) -> str:
+        return f"Wire(type={self.wire_type}, producer={self.producer}, node_index={self.node_index})"
 
 
 NumberWire = Wire[Literal[SignalType.Number]]
