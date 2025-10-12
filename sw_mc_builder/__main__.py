@@ -89,10 +89,13 @@ def main() -> None:
         if args.microcontroller:
             child_args.append("--microcontroller")
         if args.select:
-            child_args.extend(["--select", args.select])
+            for select in args.select:
+                child_args.append("--select")
+                child_args.append(select)
         if args.vehicle:
-            child_args.append("--vehicle")
-            child_args.extend(args.vehicle)
+            for vehicle_name in args.vehicle:
+                child_args.append("--vehicle")
+                child_args.append(vehicle_name)
         run_child_script(args.name, child_args)
 
 

@@ -12,11 +12,13 @@ def parser_arguments(parser: ArgumentParser) -> None:
         "--vehicle",
         "-v",
         type=str,
-        help="Export microcontrollers to vehicles. Separated by commas.",
+        action="append",
+        help="Export microcontrollers to vehicles. Can be used multiple times.",
     )
     parser.add_argument(
         "--select",
         "-s",
         type=str,
-        help="Select, which microcontrollers to export based on their name. Separated by commas.",
+        action="append",
+        help="Select, which microcontrollers to export based on their name. Can be used multiple times.",
     )

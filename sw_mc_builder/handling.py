@@ -227,7 +227,7 @@ def handle_mcs(*mcs: Microcontroller) -> None:
     parser_arguments(parser)
     args = parser.parse_args()
     if args.select:
-        selected_names = {name.strip() for name in args.select.split(",")}
+        selected_names = set(args.select)
     else:
         selected_names = set()
     compiled: dict[str, tuple[Microcontroller, XMLParserElement]] = {}
@@ -249,5 +249,5 @@ def handle_mcs(*mcs: Microcontroller) -> None:
                 print(f'Wrote microcontroller "{name}" to microcontroller directory.')
             mc._mc.image.to_sw_png(mc_path.with_suffix(".png"))
     if args.vehicle:
-        for vehicle_name in args.vehicle.split(","):
+        for vehicle_name in args.vehicle:
             replace_in_vehicle(vehicle_name, compiled)
