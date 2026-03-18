@@ -285,8 +285,10 @@ class Wire(Generic[T]):
             )
             return composite_write(self, **{f"channel{idx}": val for idx, val in zip(index_slice, value_list)})  # type: ignore[arg-type]
         if self.__is_number(value):
+            # pylint: disable-next=unexpected-keyword-arg
             return comp.composite_write_number(self, **{f"channel{item}": value})  # type: ignore[arg-type]
         if self.__is_bool(value):
+            # pylint: disable-next=unexpected-keyword-arg
             return comp.composite_write_boolean(self, **{f"channel{item}": value})  # type: ignore[arg-type]
         raise TypeError("Can only write NumberWire or BooleanWire to CompositeWire")
 
