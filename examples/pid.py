@@ -14,7 +14,9 @@ diff = setpoint - process_variable
 procedural = diff * P
 integral = comp.placeholder(SignalType.Number)
 integral.replace_producer((integral + diff * I).clamp(MIN_I, MAX_I))
-derivative = (comp.function("x", process_variable).stop_optimization() - process_variable) * D
+derivative = (
+    comp.function("x", process_variable).stop_optimization() - process_variable
+) * D
 
 result = procedural + integral + derivative
 
