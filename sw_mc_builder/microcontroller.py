@@ -63,10 +63,17 @@ class Microcontroller:
     def save_image(self, path: Path) -> None:
         self._mc.image.to_png(path)
 
-    def _validate_placement(self, position: NodePosition) -> None:
+    def _validate_placement(
+        self, position: NodePosition, input_type: SignalType
+    ) -> None:
         for node in self._mc.nodes:
-            if node.position == position:
-                raise ValueError(f"Node already exists at position {position}")
+            if node.position == position and (
+                node.type == input_type
+                or {node.type, input_type} == {SignalType.Boolean, SignalType.Number}
+            ):
+                raise ValueError(
+                    f"Node of type {input_type} already exists at position {position}"
+                )
         if position.x >= 6 or position.z >= 6 or position.x < 0 or position.z < 0:
             raise ValueError(f"Node position out of bounds {position}")
         if position.x >= self._mc.width or position.z >= self._mc.length:
@@ -85,7 +92,7 @@ class Microcontroller:
         if input_.producer in self._placed_inputs:
             raise ValueError(f"Input {input_.producer.name} already placed")
         position: NodePosition = NodePosition(x, y)
-        self._validate_placement(position)
+        self._validate_placement(position, input_.wire_type)
         self._mc.add_new_node(
             Node(
                 0,
@@ -94,7 +101,7 @@ class Microcontroller:
                 NodeMode.Input,
                 input_.wire_type,
                 input_.producer.description,
-                NodePosition(x, y),
+                position,
             )
         )
         input_.producer.component_id = self._mc.nodes[-1].component_id
@@ -109,7 +116,7 @@ class Microcontroller:
         y: int = 0,
     ) -> None:
         position: NodePosition = NodePosition(x, y)
-        self._validate_placement(position)
+        self._validate_placement(position, input_.wire_type)
         self._mc.add_new_node(
             Node(
                 0,
@@ -118,7 +125,7 @@ class Microcontroller:
                 NodeMode.Output,
                 input_.wire_type,
                 description,
-                NodePosition(x, y),
+                position,
                 input=input_.to_input(),
             )
         )
