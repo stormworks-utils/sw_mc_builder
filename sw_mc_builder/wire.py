@@ -109,6 +109,8 @@ class Wire(Generic[T]):
         for sub in self.subscribers:
             sub.producer = new_wire.producer
         new_wire.subscribers.update(self.subscribers)
+        for sub in new_wire.subscribers:
+            sub.subscribers = new_wire.subscribers
 
     @property
     def component_id(self) -> Optional[int]:
