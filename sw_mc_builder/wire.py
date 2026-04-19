@@ -38,6 +38,7 @@ class Wire(Generic[T]):
         self.wire_type: SignalType = wire_type
         self.producer: ComponentWrapper | PseudoComponent = producer
         self.node_index: int = node_index
+        self.subscribers: set[Wire] = {self}
 
     def stop_optimization(self) -> Wire[T]:
         """Will prevent the optimizer from removing this component or merging it with other components."""
@@ -105,7 +106,9 @@ class Wire(Generic[T]):
             raise TypeError(
                 f"Wire type mismatch: expected {self.wire_type}, got {new_wire.wire_type}"
             )
-        self.producer = new_wire.producer
+        for sub in self.subscribers:
+            sub.producer = new_wire.producer
+        new_wire.subscribers.update(self.subscribers)
 
     @property
     def component_id(self) -> Optional[int]:
