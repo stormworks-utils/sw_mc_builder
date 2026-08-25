@@ -1,6 +1,6 @@
 import warnings
 from pathlib import Path
-from typing import Optional
+from typing import Generator, Optional
 
 from sw_mc_lib import Node, NodePosition, Position, XMLParserElement
 from sw_mc_lib.Components import (
@@ -29,6 +29,18 @@ from sw_mc_builder.wire import BooleanInput, NumberInput, Wire
 
 from ._utils import BUILDER_IDENTIFIER, PROPERTIES
 from .optimizer import optimize_arithmetic
+
+
+def __coordinate_iter() -> Generator[tuple[int, int], None, None]:
+    yield 0, 0
+    for n in range(1, 6):
+        # Top edge: (0,n) ... (n,n)
+        for x in range(n + 1):
+            yield x, n
+
+        # Right edge: (n,n-1) ... (n,0)
+        for y in range(n - 1, -1, -1):
+            yield n, y
 
 
 class Microcontroller:
@@ -86,13 +98,40 @@ class Microcontroller:
             self._mc.width = max(self._mc.width, position.x + 1)
             self._mc.length = max(self._mc.length, position.z + 1)
 
-    def place_input(self, input_: Wire, x: int = 0, y: int = 0) -> None:
+    def __x_y_to_position(
+        self,
+        x: Optional[int],
+        y: Optional[int],
+        input_type: SignalType,
+    ) -> NodePosition:
+        if x is not None or y is not None:
+            pos = NodePosition(x or 0, y or 0)
+            self._validate_placement(pos, input_type)
+            return pos
+        for x, y in __coordinate_iter():
+            pos = NodePosition(x, y)
+            try:
+                self._validate_placement(pos, input_type)
+            except ValueError:
+                continue
+            return pos
+        raise ValueError("Can not place input. Microcontroller is full")
+
+    def place_input(
+        self,
+        input_: Wire,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
+    ) -> None:
+        """
+        Place an input wire.
+        If both x and y are None, the position will be picked automatically
+        """
         if not isinstance(input_.producer, InputPlaceholder):
             raise TypeError("Input must be produced by an InputPlaceholder")
         if input_.producer in self._placed_inputs:
             raise ValueError(f"Input {input_.producer.name} already placed")
-        position: NodePosition = NodePosition(x, y)
-        self._validate_placement(position, input_.wire_type)
+        position: NodePosition = self.__x_y_to_position(x, y, input_.wire_type)
         self._mc.add_new_node(
             Node(
                 0,
@@ -112,11 +151,14 @@ class Microcontroller:
         input_: Wire,
         name: str,
         description: str = "The processed output signal.",
-        x: int = 0,
-        y: int = 0,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
     ) -> None:
-        position: NodePosition = NodePosition(x, y)
-        self._validate_placement(position, input_.wire_type)
+        """
+        Place an output wire.
+        If both x and y are None, the position will be picked automatically
+        """
+        position: NodePosition = self.__x_y_to_position(x, y, input_.wire_type)
         self._mc.add_new_node(
             Node(
                 0,
