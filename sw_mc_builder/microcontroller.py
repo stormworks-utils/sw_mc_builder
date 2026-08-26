@@ -31,7 +31,9 @@ from ._utils import BUILDER_IDENTIFIER, PROPERTIES
 from .optimizer import optimize_arithmetic
 
 
-def __coordinate_iter(width: int, height: int) -> Generator[tuple[int, int], None, None]:
+def __coordinate_iter(
+    width: int, height: int
+) -> Generator[tuple[int, int], None, None]:
     for x in range(min(width, 6)):
         for y in range(min(height, 6)):
             yield x, y
