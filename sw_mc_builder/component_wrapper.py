@@ -21,6 +21,7 @@ class ComponentWrapper:
         self.inputs: dict[str, Wire] = inputs
         self.component_id: int = component_id
         self.optimize: bool = True
+        self.barrier: bool = False  # only stop outbound, not inbound optimization
         self.force_property: bool = False
 
     def to_component(self) -> Component:
