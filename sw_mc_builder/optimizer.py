@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Collection
 from typing import Optional
 
 from sw_mc_lib.Components import (
@@ -15,6 +16,8 @@ from sw_mc_lib.Components import (
     ArithmeticFunction8In,
     BooleanFunction8In,
     Clamp,
+    CompositeReadBoolean,
+    CompositeReadNumber,
     CompositeWriteBoolean,
     CompositeWriteNumber,
     ConstantNumber,
@@ -23,6 +26,7 @@ from sw_mc_lib.Components import (
     Equal,
     GreaterThan,
     LessThan,
+    MemoryRegister,
     Modulo,
     Multiply,
     NumericalSwitchbox,
@@ -111,7 +115,7 @@ def inner_optimize_numerical_boolean(
         switch_res = comp.numerical_switchbox(1, 0, input_wire)
         return wire_to_id(switch_res), {switch_res}
     component: ComponentWrapper = input_wire.producer
-    if not component.optimize:
+    if not component.optimize or component.barrier:
         return None
     inner = component.inner_component
     inputs = component.inputs
@@ -254,9 +258,16 @@ def optimize_component(
     return None
 
 
-def get_input_count(component: ComponentWrapper) -> int:
+def get_input_count(component: ComponentWrapper, inputs: Collection[wire.Wire]) -> int:
     return sum(
-        0 if isinstance(input_wire.producer, Unconnected) else 1
+        (
+            0
+            if (
+                isinstance(input_wire.producer, Unconnected)
+                or any(other_wire is input_wire for other_wire in inputs)
+            )
+            else 1
+        )
         for input_wire in component.inputs.values()
     )
 
@@ -280,7 +291,7 @@ class Optimizer:
             self.in_progress.remove(component)
             return component
 
-        input_count = get_input_count(component)
+        input_count = get_input_count(component, [])
 
         replacements: dict[str, str] = {}
         input_replacements: dict[str, wire.Wire] = {}
@@ -308,6 +319,8 @@ class Optimizer:
                         f"({true_func})*{on_name}+({false_func})*{off_name}",
                         **{on_name: on_prod, off_name: off_prod, **wire_associations},
                     ).producer
+                    assert isinstance(optimized, ComponentWrapper)
+                    optimized = self.find_optimizations(optimized)
             elif isinstance(component.inner_component, UpDownCounter):
                 up_optimized = inner_optimize_numerical_boolean(inputs["up_input"])
                 down_optimized = inner_optimize_numerical_boolean(inputs["down_input"])
@@ -349,6 +362,47 @@ class Optimizer:
                             )
                         )
                         optimized = result.producer
+                        assert isinstance(optimized, ComponentWrapper)
+                        optimized = self.find_optimizations(optimized)
+            elif isinstance(component.inner_component, MemoryRegister):
+                set_optimized = inner_optimize_numerical_boolean(inputs["set_input"])
+                reset_optimized = inner_optimize_numerical_boolean(
+                    inputs["reset_input"]
+                )
+                number_to_store_prod = inputs["number_to_store_input"]
+                reset_value = component.inner_component.reset_property.value
+                if set_optimized is not None and reset_optimized is not None:
+                    set_func, set_wires = set_optimized
+                    reset_func, reset_wires = reset_optimized
+                    all_wires = set_wires.union(reset_wires).union(
+                        set((number_to_store_prod,))
+                    )
+                    number_name = None
+                    if len(all_wires) <= 7:  # need one extra for self reference
+                        available_names = ["x", "y", "z", "w", "a", "b", "c", "d"]
+                        wire_associations = {}
+                        for wire_ in all_wires:
+                            name = available_names.pop(0)
+                            set_func = set_func.replace(wire_to_id(wire_), name)
+                            reset_func = reset_func.replace(wire_to_id(wire_), name)
+                            wire_associations[name] = wire_
+                            if wire_ is number_to_store_prod:
+                                number_name = name
+                        assert number_name
+                        result = comp.placeholder(SignalType.Number)
+                        self_name = available_names.pop(0)
+                        wire_associations[self_name] = result
+                        value = f"({self_name}*(1-{set_func})*(1-{reset_func})+{number_name}*{set_func}+{reset_value}*{reset_func})"
+                        result.replace_producer(
+                            comp.function(
+                                value,
+                                **wire_associations,
+                            )
+                        )
+                        optimized = result.producer
+                        assert isinstance(optimized, ComponentWrapper)
+                        optimized.barrier = True
+                        optimized = self.find_optimizations(optimized)
             elif (
                 isinstance(
                     component.inner_component,
@@ -400,11 +454,13 @@ class Optimizer:
             if (
                 isinstance(input_wire.producer, ComponentWrapper)
                 and input_wire.producer not in self.in_progress
+                and not input_wire.producer.barrier
             ):
                 raw_optimized = self.find_optimizations(input_wire.producer)
             if (
                 isinstance(input_wire.producer, ComponentWrapper)
                 and input_wire.producer.optimize
+                and not input_wire.producer.barrier
                 and input_wire.producer not in self.in_progress
                 and raw_optimized is not None
                 and not any(
@@ -416,7 +472,8 @@ class Optimizer:
                     assert isinstance(optimized_input, ComponentWrapper)
                     potential_optimizations.append(
                         (
-                            get_input_count(optimized_input) - 1,
+                            get_input_count(optimized_input, optimized.inputs.values())
+                            - 1,
                             name,
                             optimized_input,
                             input_wire,
@@ -510,6 +567,67 @@ class Optimizer:
                     to_visit.add(input_wire.producer)
 
 
+def optimize_load_store(wires: list[wire.Wire]) -> None:
+    """
+    Optimize redundant composite reads/writes
+    """
+    visited: set[wire.Wire] = set()
+    todo: set[wire.Wire] = set(wires)
+    while todo:
+        current = todo.pop()
+        if current in visited or not isinstance(current.producer, ComponentWrapper):
+            continue
+        visited.add(current)
+        for input in current.producer.inputs.values():
+            todo.add(input)
+        if (
+            isinstance(current.producer.inner_component, CompositeReadNumber)
+            and current.producer.inner_component.channel_property >= 1
+        ):
+            name = f"channel_{current.producer.inner_component.channel_property}_input"
+            source = current.producer.inputs["composite_signal_input"].producer
+            while (
+                isinstance(source, ComponentWrapper)
+                and isinstance(
+                    source.inner_component,
+                    (CompositeWriteBoolean, CompositeWriteNumber),
+                )
+                and source.optimize
+                and not source.barrier
+            ):
+                if isinstance(source.inner_component, CompositeWriteNumber):
+                    input = source.inputs[name]
+                    if not isinstance(input.producer, Unconnected):
+                        current.replace_producer(input)
+                        break
+                source = source.inputs["composite_signal_input"].producer
+            if isinstance(source, Unconnected):
+                current.replace_producer(comp.unconnected(SignalType.Number))
+        elif (
+            isinstance(current.producer.inner_component, CompositeReadBoolean)
+            and current.producer.inner_component.channel_property >= 1
+        ):
+            name = f"channel_{current.producer.inner_component.channel_property}_input"
+            source = current.producer.inputs["composite_signal_input"].producer
+            while (
+                isinstance(source, ComponentWrapper)
+                and isinstance(
+                    source.inner_component,
+                    (CompositeWriteBoolean, CompositeWriteNumber),
+                )
+                and source.optimize
+                and not source.barrier
+            ):
+                if isinstance(source.inner_component, CompositeWriteBoolean):
+                    input = source.inputs[name]
+                    if not isinstance(input.producer, Unconnected):
+                        current.replace_producer(input)
+                        break
+                source = source.inputs["composite_signal_input"].producer
+            if isinstance(source, Unconnected):
+                current.replace_producer(comp.unconnected(SignalType.Number))
+
+
 def optimize_arithmetic(wires: list[wire.Wire]) -> None:
     """
     Optimize the given components by inlining arithmetic functions where possible.
@@ -517,6 +635,7 @@ def optimize_arithmetic(wires: list[wire.Wire]) -> None:
     :param wires: List of ComponentWrapper to optimize
     :return: None
     """
+    optimize_load_store(wires)
     optimizer = Optimizer(
         [w.producer for w in wires if isinstance(w.producer, ComponentWrapper)]
     )
