@@ -2,6 +2,8 @@
 Adressable memory
 """
 
+from typing import Literal
+
 from sw_mc_builder import *
 from sw_mc_builder.wire import Wire
 
@@ -9,10 +11,10 @@ from sw_mc_builder.wire import Wire
 def memory(
     rows: int,
     cols: int,
-    input: Wire[SignalType.Composite],
-    write_pointer: Wire[SignalType.Number],
-    read_pointer: Wire[SignalType.Number],
-):
+    input: Wire[Literal[SignalType.Composite]],
+    write_pointer: Wire[Literal[SignalType.Number]],
+    read_pointer: Wire[Literal[SignalType.Number]],
+) -> tuple[Wire[Literal[SignalType.Composite]], Wire[Literal[SignalType.Composite]]]:
     regular_output = comp.unconnected(SignalType.Composite)
     last_output = comp.placeholder(SignalType.Composite)
     for row in range(1, rows + 1):
