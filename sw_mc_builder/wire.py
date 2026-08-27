@@ -119,9 +119,12 @@ class Wire(Generic[T]):
         if isinstance(self.producer, Unconnected):
             return None
         if isinstance(self.producer, Placeholder):
-            raise RuntimeError(
-                "Placeholder needs to be replaced before compiling microcontroller"
-            )
+            print("WARNING: Unresolved input placeholder")
+            if self.producer.name:
+                print(f"Named: {self.producer.name}")
+            if self.producer.tb:
+                print(f"At\n{self.producer.tb}")
+            return None
         raise TypeError(f"Invalid producer type: {type(self.producer)}")
 
     def __hash__(self) -> int:

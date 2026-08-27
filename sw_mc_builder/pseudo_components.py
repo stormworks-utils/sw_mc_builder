@@ -1,5 +1,6 @@
 # pylint: disable=too-few-public-methods
 from __future__ import annotations
+from typing import Optional
 
 
 class PseudoComponent:
@@ -12,6 +13,10 @@ class Unconnected(PseudoComponent):
 
 class Placeholder(PseudoComponent):
     """A placeholder component that does nothing and has no size."""
+
+    def __init__(self, tb: Optional[str], name: Optional[str]) -> None:
+        self.tb: Optional[str] = tb
+        self.name: Optional[str] = name
 
 
 class InputPlaceholder(PseudoComponent):
