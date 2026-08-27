@@ -205,7 +205,7 @@ def placeholder(signal_type: SignalType, name: Optional[str] = None) -> Wire:
     Must be resolved to generate a valid microcontroller.
     """
     tb = "".join(traceback.format_stack()[:-1])
-    return Wire(signal_type, Placeholder(name, tb))
+    return Wire(signal_type, Placeholder(tb, name))
 
 
 def and_(a: BooleanInput, b: BooleanInput) -> BooleanWire:
