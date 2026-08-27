@@ -4,7 +4,7 @@ import sys
 from argparse import ArgumentParser
 from functools import cache
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Sequence
 
 from sw_mc_lib import XMLParserElement, format, parse
 from sw_mc_lib.Types import ComponentType
@@ -219,15 +219,15 @@ def replace_in_vehicle(
     print(f'Wrote microcontrollers to vehicle "{vehicle_name}".')
 
 
-def handle_mcs(*mcs: Microcontroller) -> None:
+def handle_mcs(*mcs: Microcontroller, args: Optional[Sequence[str]] = None) -> None:
     # pylint: disable=protected-access
     if len(mcs) == 0:
         raise ValueError("At least one microcontroller must be provided")
     parser = ArgumentParser(description="Microcontroller collection")
     parser_arguments(parser)
-    args = parser.parse_args()
-    if args.select:
-        selected_names = set(args.select)
+    parsed_args = parser.parse_args(args=args)
+    if parsed_args.select:
+        selected_names = set(parsed_args.select)
     else:
         selected_names = set()
     compiled: dict[str, tuple[Microcontroller, XMLParserElement]] = {}
@@ -240,7 +240,7 @@ def handle_mcs(*mcs: Microcontroller) -> None:
         if name in compiled:
             raise ValueError(f"Duplicate microcontroller name: {name}")
         compiled[name] = (mc, mc._resolve_and_optimize())
-    if args.microcontroller:
+    if parsed_args.microcontroller:
         for name, (mc, xml_mc) in compiled.items():
             mc_path = name_to_path(mc._save_name, "microprocessors")
             mc_path.parent.mkdir(parents=True, exist_ok=True)
@@ -248,6 +248,6 @@ def handle_mcs(*mcs: Microcontroller) -> None:
                 f.write(format(xml_mc))
                 print(f'Wrote microcontroller "{name}" to microcontroller directory.')
             mc._mc.image.to_sw_png(mc_path.with_suffix(".png"))
-    if args.vehicle:
-        for vehicle_name in args.vehicle:
+    if parsed_args.vehicle:
+        for vehicle_name in parsed_args.vehicle:
             replace_in_vehicle(vehicle_name, compiled)
