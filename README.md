@@ -44,10 +44,10 @@ added = input1 + input2 * 2
 highest = input1.max(input2)
 
 mc = Microcontroller("Example MC")
-mc.place_input(input1, 0, 0)
-mc.place_input(input2, 0, 1)
-mc.place_output(added, "Added", x=1, y=0)
-mc.place_output(highest, "Highest", x=1, y=1)
+mc.place_input(input1)
+mc.place_input(input2)
+mc.place_output(added, "Added")
+mc.place_output(highest, "Highest")
 
 if __name__ == "__main__":
     handle_mcs(mc)
@@ -153,7 +153,8 @@ It can handle multiple microcontrollers at once.
 ### Recursive definitions
 
 There is a special component, a `Placeholder`, which can be used to create recursive definitions.
-A `Placeholder` must be resolved before submitting the microcontroller to `handle_mcs`, otherwise an error will be raised.
+A `Placeholder` should be resolved before submitting the microcontroller to `handle_mcs`,
+otherwise an warning will be issued.
 
 ```python
 from sw_mc_builder import *
@@ -170,6 +171,7 @@ If an input is used in any calculation that is present in an output, wi has to b
 Outputs are simply defined by placing them in a microcontroller.
 
 If inputs or outputs are outside of the boundaries of the microcontroller, a warning will be generated, and the microcontroller expanded.
+If `x` and `y` are none in a input or output definition, the IO will be autoplaced.
 
 ```python
 from sw_mc_builder import *
