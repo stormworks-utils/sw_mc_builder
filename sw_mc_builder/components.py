@@ -1,4 +1,5 @@
 # pylint: disable=too-many-lines, too-many-arguments, too-many-locals, redefined-outer-name
+import traceback
 from typing import Optional
 
 from sw_mc_lib import Position
@@ -197,13 +198,14 @@ def unconnected(signal_type: SignalType) -> Wire:
     return Wire(signal_type, Unconnected())
 
 
-def placeholder(signal_type: SignalType) -> Wire:
+def placeholder(signal_type: SignalType, name: Optional[str] = None) -> Wire:
     """
     Placeholder component for incomplete circuits.
     Can be used for circular dependencies.
     Must be resolved to generate a valid microcontroller.
     """
-    return Wire(signal_type, Placeholder())
+    tb = "".join(traceback.format_stack()[:-1])
+    return Wire(signal_type, Placeholder(name, tb))
 
 
 def and_(a: BooleanInput, b: BooleanInput) -> BooleanWire:
