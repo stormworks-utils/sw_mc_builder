@@ -463,10 +463,11 @@ class Wire(Generic[T]):
             raise TypeError("Can only floor NumberWire")
         return comp.function("floor(x)", self)  # type: ignore[arg-type]
 
-    def round(self, ndigits: NumberInput = 0) -> NumberWire:
+    def round(self, towards: NumberInput = 1) -> NumberWire:
+        """Round towards the closest multiple of `towards`"""
         if self.wire_type != SignalType.Number:
             raise TypeError("Can only round NumberWire")
-        return comp.function("round(x,y)", self, ndigits)  # type: ignore[arg-type]
+        return comp.function("round(x,y)", self, towards)  # type: ignore[arg-type]
 
     def sgn(self) -> NumberWire:
         """Sign function: -1 if x < 0, 1 if x == 0, 1 if x > 0"""
