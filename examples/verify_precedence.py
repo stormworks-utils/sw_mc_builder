@@ -1,6 +1,5 @@
 from sw_mc_builder import *
 
-
 OPS = ["+", "-", "*", "/", "%", "^"]
 
 result = comp.constant_on()
