@@ -31,9 +31,7 @@ from ._utils import BUILDER_IDENTIFIER, PROPERTIES
 from .optimizer import optimize_arithmetic
 
 
-def __coordinate_iter(
-    width: int, height: int
-) -> Generator[tuple[int, int], None, None]:
+def _coordinate_iter(width: int, height: int) -> Generator[tuple[int, int], None, None]:
     for x in range(min(width, 6)):
         for y in range(min(height, 6)):
             yield x, y
@@ -113,7 +111,7 @@ class Microcontroller:
             pos = NodePosition(x or 0, y or 0)
             self._validate_placement(pos, input_type)
             return pos
-        for x, y in __coordinate_iter(self._mc.width, self._mc.length):
+        for x, y in _coordinate_iter(self._mc.width, self._mc.length):
             pos = NodePosition(x, y)
             try:
                 self._validate_placement(pos, input_type)
