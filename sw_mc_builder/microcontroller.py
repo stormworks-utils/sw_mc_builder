@@ -82,7 +82,7 @@ class Microcontroller:
         self, position: NodePosition, input_type: SignalType
     ) -> None:
         for node in self._mc.nodes:
-            if node.position == position and (
+            if node.input_position == position and (
                 node.type == input_type
                 or {node.type, input_type} == {SignalType.Boolean, SignalType.Number}
             ):
@@ -143,7 +143,7 @@ class Microcontroller:
                 NodeMode.Input,
                 input_.wire_type,
                 input_.producer.description,
-                position,
+                input_position=position,
             )
         )
         input_.producer.component_id = self._mc.nodes[-1].component_id
@@ -170,7 +170,7 @@ class Microcontroller:
                 NodeMode.Output,
                 input_.wire_type,
                 description,
-                position,
+                input_position=position,
                 input=input_.to_input(),
             )
         )
