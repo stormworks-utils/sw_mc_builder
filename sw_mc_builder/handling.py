@@ -68,8 +68,11 @@ def extract_mcs_from_vehicle(
         vehicle_xml: XMLParserElement = parse(f.read())
     if vehicle_xml.tag != "vehicle":
         return None
-    bodies = vehicle_xml.children[1]
-    if bodies.tag != "bodies":
+    for child in vehicle_xml.children:
+        if child.tag == "bodies":
+            bodies = child
+            break
+    else:
         return None
     relevant_mcs: list[XMLParserElement] = []
     for body in bodies.children:
