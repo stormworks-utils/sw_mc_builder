@@ -46,6 +46,17 @@ class Wire(Generic[T]):
             self.producer.optimize = False
         return self
 
+    def barrier(self) -> Wire[T]:
+        """
+        Will place an optimization barrier after this component.
+        Difference to stop_optimization:
+            stop_optimization brevents all optimizations. A barrier only stops
+            optimizations after this component.
+        """
+        if isinstance(self.producer, ComponentWrapper):
+            self.producer.barrier = True
+        return self
+
     def force_property(self) -> Wire[T]:
         """Will overwrite the contents of a property, even if that property is already defined in a vehicle."""
         if isinstance(self.producer, ComponentWrapper):
