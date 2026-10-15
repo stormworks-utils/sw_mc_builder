@@ -45,7 +45,7 @@ from .pseudo_components import PseudoComponent, Unconnected
 
 def wire_to_id(w: wire.Wire) -> str:
     # deterministic one way function to get a unique id for a wire
-    return str(id(w))
+    return f"id{{{id(w)}}}"
 
 
 def process_and(inputs: dict[str, wire.Wire]) -> Optional[tuple[str, set[wire.Wire]]]:
