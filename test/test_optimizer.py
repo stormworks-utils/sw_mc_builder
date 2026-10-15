@@ -1,4 +1,4 @@
-from sw_mc_lib.Components import ArithmeticFunction8In, Add
+from sw_mc_lib.Components import ArithmeticFunction8In
 from sw_mc_lib.Types import SignalType
 
 import sw_mc_builder.components as comp
