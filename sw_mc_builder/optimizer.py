@@ -464,7 +464,12 @@ class Optimizer:
                 and input_wire.producer not in self.in_progress
                 and raw_optimized is not None
                 and not any(
-                    w.producer is raw_optimized for w in raw_optimized.inputs.values()
+                    w.producer is raw_optimized
+                    or (
+                        isinstance(w.producer, ComponentWrapper)
+                        and self.optimized_components.get(w.producer) is raw_optimized
+                    )
+                    for w in raw_optimized.inputs.values()
                 )
             ):
                 optimized_input = optimize_component(raw_optimized)
