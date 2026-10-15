@@ -29,5 +29,11 @@ class TestOptimizer:
         assert isinstance(counter_producer.inputs["y_input"].producer, PseudoComponent)
         assert feedback_producer.inputs["x_input"].producer is counter_producer
         assert isinstance(feedback_producer.inputs["y_input"].producer, PseudoComponent)
-        assert counter_producer.inner_component.function == "(((1-sgn(0-x))/2))*(1)+((1-((1-sgn(0-x))/2)))*(0)"
-        assert feedback_producer.inner_component.function == "x+((((1-sgn(0-x))/2))*(1)+((1-((1-sgn(0-x))/2)))*(0))"
+        assert (
+            counter_producer.inner_component.function
+            == "(((1-sgn(0-x))/2))*(1)+((1-((1-sgn(0-x))/2)))*(0)"
+        )
+        assert (
+            feedback_producer.inner_component.function
+            == "x+((((1-sgn(0-x))/2))*(1)+((1-((1-sgn(0-x))/2)))*(0))"
+        )

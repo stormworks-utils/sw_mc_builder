@@ -467,8 +467,7 @@ class Optimizer:
                     w.producer is raw_optimized
                     or (
                         isinstance(w.producer, ComponentWrapper)
-                        and self.optimized_components.get(w.producer)
-                        is raw_optimized
+                        and self.optimized_components.get(w.producer) is raw_optimized
                     )
                     for w in raw_optimized.inputs.values()
                 )
